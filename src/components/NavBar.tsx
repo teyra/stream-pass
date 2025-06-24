@@ -1,19 +1,18 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import Link from "next/link";
-
 const Navbar = () => {
   return (
-    <header className="w-full bg-gray-800 text-white py-4 px-8 shadow-md">
-      <nav className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">DeFi 应用</h1>
-        <div className="flex gap-4">
-          <Link href="/staking">质押</Link>
-          <Link href="/swap">代币兑换</Link>
-          <Link href="/history">交易历史</Link>
+    <header className="w-full  text-white py-4 px-8 shadow-md">
+      <nav className="flex justify-between items-center max-w-7xl mx-auto">
+        {/* Logo/ */}
+        <h1 className="text-2xl font-bold text-[#4abba1] tracking-wide">
+          🎥 Stream Pass
+        </h1>
+        {/* RainbowKit  */}
+        <div className="ml-4">
+          <ConnectButton label="connect wallet" />
         </div>
-        <ConnectButton label="connect wallect" />
       </nav>
     </header>
   );

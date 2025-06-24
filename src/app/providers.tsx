@@ -6,7 +6,7 @@ import { type State, WagmiProvider } from "wagmi";
 
 import { getConfig } from "@/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
-import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 
 export function Providers(props: {
   children: ReactNode;
@@ -18,8 +18,20 @@ export function Providers(props: {
   return (
     <WagmiProvider config={config} initialState={props.initialState}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider coolMode>{props.children}</RainbowKitProvider>
-       </QueryClientProvider>
+        <RainbowKitProvider
+          locale="en-US"
+          theme={darkTheme({
+            accentColor: "#4abba1",
+            accentColorForeground: "black",
+            borderRadius: "small",
+            fontStack: "system",
+            overlayBlur: "small",
+          })}
+          coolMode
+        >
+          {props.children}
+        </RainbowKitProvider>
+      </QueryClientProvider>
     </WagmiProvider>
   );
 }

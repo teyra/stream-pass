@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #0b0b22;
   --foreground: #171717;
 }
 
@@ -23,4 +23,44 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+@keyframes slide-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 20s linear infinite;
+}
+
+/* globals.css 或你的布局组件 */
+.custom-menu .arco-menu-inner {
+  padding-top: 20px;
+}
+
+.custom-menu .arco-menu-item {
+  color: #ccc;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+
+}
+
+.custom-menu .arco-menu-item:hover {
+  background: #23293a;
+  color: #8be9fd;
+}
+
+.custom-menu .arco-menu-selected {
+  background: linear-gradient(90deg, #648d83, #448c98);
+  color: #000 !important;
+  border-radius: 8px;
+  font-weight: bold;
 }
