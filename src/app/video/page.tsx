@@ -18,6 +18,12 @@ const getRandomMovieTitle = () => {
   return movieTitles[Math.floor(Math.random() * movieTitles.length)];
 };
 
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+}
 const allVideos = Array.from({ length: 10 }, (_, i) => {
   return {
     id: String(i + 1),
@@ -45,7 +51,10 @@ export default function VideoList() {
     router.push(`/video/${item.id}`);
   };
 
-  const renderCard = (video: any, model: "classic" | "modern" = "classic") => {
+  const renderCard = (
+    video: Video,
+    model: "classic" | "modern" = "classic"
+  ) => {
     if (model === "classic") {
       return (
         <li
@@ -104,7 +113,7 @@ export default function VideoList() {
             {video.title}
           </div>
           <div className="text-xs text-gray-600 line-clamp-2 h-10">
-              {video.description}
+            {video.description}
           </div>
         </div>
       </li>
@@ -138,7 +147,9 @@ export default function VideoList() {
       )}
 
       {videos.length === 0 && (
-        <div className="text-center text-gray-400 py-12">No videos available for this category</div>
+        <div className="text-center text-gray-400 py-12">
+          No videos available for this category
+        </div>
       )}
     </div>
   );

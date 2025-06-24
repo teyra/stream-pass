@@ -55,28 +55,6 @@ export default function VIPAccess({
     hash: allowHash,
   });
 
-  useEffect(() => {
-    if (isAllowSuccess) {
-      setAllowHash("0x");
-      setIsApproving(false);
-      setHasApproved(true);
-      allowanceRefetch();
-      handleUnlock();
-    }
-  }, [isAllowSuccess]);
-
-  const { isSuccess: isPurchaseReceiptSuccess } = useWaitForTransactionReceipt({
-    hash: purchaseHash,
-  });
-  useEffect(() => {
-    if (isPurchaseReceiptSuccess) {
-      setPurchaseHash("0x");
-      balanceRefetch();
-      setIsUnlocking(false);
-      onSuccess();
-    }
-  }, [isPurchaseReceiptSuccess]);
-
   const handleUnlock = async () => {
     if (Number(myBalance) < 5 || Number(myAllowanceBalance) < 5) {
       return;
@@ -104,7 +82,27 @@ export default function VIPAccess({
     });
     setAllowHash(tx);
   };
+  useEffect(() => {
+    if (isAllowSuccess) {
+      setAllowHash("0x");
+      setIsApproving(false);
+      setHasApproved(true);
+      allowanceRefetch();
+      handleUnlock();
+    }
+  }, [isAllowSuccess, allowanceRefetch, handleUnlock]);
 
+  const { isSuccess: isPurchaseReceiptSuccess } = useWaitForTransactionReceipt({
+    hash: purchaseHash,
+  });
+  useEffect(() => {
+    if (isPurchaseReceiptSuccess) {
+      setPurchaseHash("0x");
+      balanceRefetch();
+      setIsUnlocking(false);
+      onSuccess();
+    }
+  }, [isPurchaseReceiptSuccess]);
   return (
     <Modal
       visible={visible}

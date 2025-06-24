@@ -21,7 +21,7 @@ export default function Toast({
       setTimeout(onClose, 300);
     }, duration);
     return () => clearTimeout(timer);
-  }, []);
+  }, [duration, onClose]);
 
   const icon =
     type === "error" ? (

@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { Menu } from "@arco-design/web-react";
-import { IconApps, IconBulb } from "@arco-design/web-react/icon";
 import { useEffect, useState } from "react";
 
 const MenuItem = Menu.Item;
@@ -11,17 +10,14 @@ const menuList = [
   {
     key: "/film",
     title: "热门电影",
-    icon: <IconApps />,
   },
   {
     key: "/film/mine",
     title: "我的电影",
-    icon: <IconBulb />,
   },
   {
     key: "/film/assets",
     title: "我的资产",
-    icon: <IconBulb />,
   },
 ];
 
@@ -59,9 +55,7 @@ export default function MainLayout({
         className="custom-menu"
       >
         {menuList.map((item) => (
-          <MenuItem key={item.key} icon={item.icon}>
-            {item.title}
-          </MenuItem>
+          <MenuItem key={item.key}>{item.title}</MenuItem>
         ))}
       </Menu>
 

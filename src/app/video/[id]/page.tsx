@@ -1,9 +1,10 @@
 "use client";
-import { isValidVIPAbi, purchaseVIPAbi } from "@/abi/vip";
+import { isValidVIPAbi } from "@/abi/vip";
 import VIPAccess from "@/components/VipAccess";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount, useChainId, useReadContract } from "wagmi";
+import Image from "next/image";
 
 const getRandomMovieTitle = () => {
   const movieTitles = [
@@ -33,7 +34,7 @@ const allVideos = Array.from({ length: 50 }, (_, i) => ({
   date: "2024-05-29",
 }));
 
-export default function VideoDetailPage({}: { params: { id: string } }) {
+export default function VideoDetailPage() {
   const vipAddress = process.env.NEXT_PUBLIC_SPT_ADDRESS;
   const { id } = useParams();
   const [video, setVideo] = useState<any>(null);
@@ -62,7 +63,7 @@ export default function VideoDetailPage({}: { params: { id: string } }) {
     } else if (isSuccess && hasNFT) {
       setVideo(allVideos.find((v) => v.id === id));
     }
-  }, [hasNFT, id]);
+  }, [hasNFT, id, isSuccess]);
   if (!isSupportedChain) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center text-gray-300 bg-black">
@@ -138,7 +139,9 @@ export default function VideoDetailPage({}: { params: { id: string } }) {
                   className="bg-[#141414] hover:bg-[#1e1e1e] p-3 rounded-xl flex items-center gap-4 cursor-pointer transition"
                   onClick={() => (window.location.href = `/video/${v.id}`)}
                 >
-                  <img
+                  <Image
+                    width={80}
+                    height={56}
                     src={v.thumbnail}
                     alt={v.title}
                     className="w-20 h-14 object-cover rounded-lg border border-[#2a2a2a]"

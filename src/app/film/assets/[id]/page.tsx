@@ -16,9 +16,37 @@ import { useToast } from "@/hooks/useToast";
 import { crossChainBurnAbi } from "@/abi/film";
 
 export default function FilmInvestDetailPage() {
+  // 类型定义
+  type Film = {
+    contract_address: `0x${string}`;
+    title: string;
+    genre?: string;
+    language?: string;
+    country?: string;
+    stars?: string[] | string;
+    director?: string;
+    plotSummary?: string;
+  };
+
+  type Invest = {
+    tokenId: number;
+    created_at?: string;
+  };
+
+  type Asset = {
+    id: number;
+    film: Film;
+    invest: Invest;
+    metadata?: {
+      name?: string;
+      description?: string;
+      image?: string;
+      [key: string]: any;
+    };
+  };
   const { id } = useParams();
   const { address } = useAccount();
-  const [asset, setAsset] = useState<any>(null);
+  const [asset, setAsset] = useState<Asset | null>(null);
   const { writeContractAsync } = useWriteContract();
   // 跨链弹窗相关
   const [modalVisible, setModalVisible] = useState(false);
@@ -31,7 +59,7 @@ export default function FilmInvestDetailPage() {
   const toast = useToast();
   // const reciverAddress = process.env.NEXT_PUBLIC_RECIVER_ADDRESS;
   const reciverAddress = "0x931987036840C213ED289d46147Cb7E1e2c18b6D"; // 替换为实际接收地址
-  const { data: receipt, isSuccess } = useWaitForTransactionReceipt({
+  const { data: isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
   useEffect(() => {
@@ -41,7 +69,7 @@ export default function FilmInvestDetailPage() {
       setModalVisible(false);
       toast.success("Cross-chain transfer submitted!");
     }
-  }, [isSuccess]);
+  }, [isSuccess, toast]);
 
   // Fetch asset record from supabase
 
@@ -86,7 +114,7 @@ export default function FilmInvestDetailPage() {
           const url = tokenURI.replace("ipfs://", "https://ipfs.io/ipfs/");
           const response = await fetch(url);
           const metadata = await response.json();
-          setAsset((prev: any) => ({
+          setAsset((prev) => ({
             ...prev,
             metadata,
           }));

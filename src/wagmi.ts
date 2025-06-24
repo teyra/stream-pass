@@ -1,5 +1,5 @@
 import { http, cookieStorage, createConfig, createStorage } from "wagmi";
-import { avalancheFuji, mainnet, saigon, sepolia } from "wagmi/chains";
+import { avalancheFuji, mainnet, sepolia } from "wagmi/chains";
 import { coinbaseWallet, injected } from "wagmi/connectors";
 
 export function getConfig() {

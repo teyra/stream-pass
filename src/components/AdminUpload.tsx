@@ -4,6 +4,7 @@ import lighthouse from "@lighthouse-web3/sdk";
 import { useAccount, useSignMessage, useWriteContract } from "wagmi";
 import { parseAbi, parseEther } from "viem";
 import { supabase } from "@/supabase";
+import Image from "next/image";
 
 export default function AdminUpload() {
   const [file, setFile] = useState<File | null>(null);
@@ -49,7 +50,7 @@ export default function AdminUpload() {
     try {
       return await signMessageAsync({ message });
     } catch (error) {
-      alert("签名失败，请重试");
+      console.log("🚀 ~ signAuthMessage ~ error:", error);
       return null;
     }
   };
@@ -71,7 +72,6 @@ export default function AdminUpload() {
     }
     setLoading(true);
     try {
-      const apiKey = "1c4c599d.afccba867b59414da40e3c588260a5b8";
       const signedMessage = await signAuthMessage();
       console.log("🚀 ~ handleUpload ~ signedMessage:", signedMessage);
       if (!signedMessage) {
@@ -92,7 +92,7 @@ export default function AdminUpload() {
         "bafybeicssydelgatxnbe3iuhhrfwzmxduw2o65v33qzpmwvzl3wd62hvki";
       setIpfsUrl(`https://decrypt.mesh3.network/evm/${hash}`);
       // 创建资产
-      const { data, error } = await supabase.from("assets").insert([
+      await supabase.from("assets").insert([
         {
           token_name: form.name,
           token_symbol: form.symbol,
@@ -127,8 +127,8 @@ export default function AdminUpload() {
         ],
       });
       alert("资产创建成功，交易哈希：" + res);
-    } catch (e: any) {
-      alert(e?.message || "操作失败");
+    } catch (e) {
+      console.log("🚀 ~ handleUpload ~ e:", e);
     }
     setLoading(false);
   }
@@ -232,7 +232,9 @@ export default function AdminUpload() {
               className="file:bg-cyan-600 file:text-white file:rounded file:px-4 file:py-2 file:border-none file:mr-4"
             />
             {preview && (
-              <img
+              <Image
+                width={200}
+                height={200}
                 src={preview}
                 alt="预览"
                 className="mt-2 max-h-40 rounded shadow border border-cyan-900 object-contain"

@@ -5,88 +5,101 @@ import { useAccount } from "wagmi";
 import Image from "next/image";
 import { supabase } from "@/supabase";
 import { useRouter } from "next/navigation";
+
+// Define types for your data structures
+interface Film {
+  id: string;
+  title: string;
+  posterUrl: string;
+  // Add other film properties as needed
+}
+
+interface Invest {
+  id: string;
+  tokenId: string;
+  // Add other invest properties as needed
+}
+
+interface InvestRecord {
+  id: string;
+  amount: number;
+  investor: string;
+  film: Film;
+  invest: Invest;
+  // Add other record properties as needed
+}
+
 export default function AssetCrossChainPage() {
   const router = useRouter();
-  const [list, setList] = useState<any[]>([]);
-  const SPT_ADDRESS = process.env.NEXT_PUBLIC_SPT_ADDRESS;
+  const [list, setList] = useState<InvestRecord[]>([]);
   const { address } = useAccount();
-  //   const { data: balance } = useReadContract({
-  //     abi: erc721Abi,
-  //     address: SPT_ADDRESS,
-  //     functionName: "balanceOf",
-  //     args: [address as `0x${string}`],
-  //   });
-  //   console.log("🚀 ~ AssetCrossChainPage ~ data:", balance);
 
-  //   const { data: erc1155Balance } = useReadContract({
-  //     abi: erc1155Abi,
-  //     address: SPT_ADDRESS,
-  //     functionName: "balanceOf",
-  //     args: [address as `0x${string}`],
-  //   });
-  //   console.log("🚀 ~ AssetCrossChainPage ~ data:", erc1155Balance);
-  const fetchAssets = async () => {
-    const { data, error } = await supabase
-      .from("investRecords")
-      .select(
-        `
+  useEffect(() => {
+    const fetchAssets = async () => {
+      if (!address) return;
+
+      const { data, error } = await supabase
+        .from("investRecords")
+        .select(
+          `
         *,
-       film (*),
-       invest (*)
+        film (*),
+        invest (*)
       `
-      )
-      .eq("investor", address);
-    console.log("🚀 ~ fetchAssets ~ data:", data);
-    const processedData =
-      data &&
-      data.reduce((acc: any[], record: any) => {
+        )
+        .eq("investor", address);
+
+      console.log("🚀 ~ fetchAssets ~ data:", data);
+
+      const processedData = data?.reduce((acc: InvestRecord[], record) => {
         const existingIndex = acc.findIndex(
           (item) => item.invest.id === record.invest.id
         );
 
         if (existingIndex >= 0) {
-          // 累加 amount
+          // Accumulate amount
           acc[existingIndex].amount += record.amount;
         } else {
-          // 添加新记录
+          // Add new record
           acc.push({ ...record });
         }
         return acc;
-      }, [] as typeof data);
-    data && console.log("🚀 ~ fetchAssets ~ processedData:", processedData);
-    setList(processedData || []);
-    if (error) {
-      console.error("Error fetching assets:", error);
-    }
-  };
-  useEffect(() => {
-    if (address) {
-      fetchAssets();
-    }
+      }, [] as InvestRecord[]);
+
+      console.log("🚀 ~ fetchAssets ~ processedData:", processedData);
+      setList(processedData || []);
+
+      if (error) {
+        console.error("Error fetching assets:", error);
+      }
+    };
+    fetchAssets();
   }, [address]);
 
   return (
     <div className="max-w-2xl mx-auto py-10 px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {list.map((asset: any, index) => (
+        {list.map((asset, index) => (
           <div
             key={index}
-            className="bg-[#181a20] rounded-2xl overflow-hidden shadow-lg  flex flex-col  border border-[#23293a]"
+            className="bg-[#181a20] rounded-2xl overflow-hidden shadow-lg flex flex-col border border-[#23293a]"
           >
             <div className="relative w-full h-100 bg-black">
-              <Image
-                src={asset.film?.posterUrl}
-                alt={asset.film?.title}
-                className="object-contain"
-                loading="lazy"
-                fill
-                sizes="100"
-                style={{
-                  borderTopLeftRadius: "1rem",
-                  borderTopRightRadius: "1rem",
-                }}
-              />
-              <span className="absolute top-3 left-3  text-[#f3f3f3] text-xl">
+              {asset.film?.posterUrl && (
+                <Image
+                  src={asset.film.posterUrl}
+                  alt={asset.film.title || "Film poster"}
+                  className="object-contain"
+                  loading="lazy"
+                  fill
+                  sizes="100"
+                  style={{
+                    borderTopLeftRadius: "1rem",
+                    borderTopRightRadius: "1rem",
+                  }}
+                />
+              )}
+              <span className="absolute top-3 left-3 text-[#f3f3f3] text-xl">
                 {asset.amount}
               </span>
             </div>
