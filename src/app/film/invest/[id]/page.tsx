@@ -71,23 +71,23 @@ export default function FilmInvestDetailPage() {
   });
 
   const [loading, setLoading] = useState(true);
-  const fetchFilm = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("invests")
-      .select(
-        `
+
+  useEffect(() => {
+    const fetchFilm = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("invests")
+        .select(
+          `
         *,
        films (*)
       `
-      )
-      .eq("id", id)
-      .single();
-    setFilm(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
+        )
+        .eq("id", id)
+        .single();
+      setFilm(data);
+      setLoading(false);
+    };
     fetchFilm();
   }, [id]);
 
@@ -168,15 +168,7 @@ export default function FilmInvestDetailPage() {
   const { isSuccess: investSuccess } = useWaitForTransactionReceipt({
     hash,
   });
-  useEffect(() => {
-    if (investSuccess) {
-      collectBalanceRefetch();
-      filmRecordsRefetch();
-      setInvesting(false);
-      handleInsertRecord();
-      setHash("0x");
-    }
-  }, [investSuccess]);
+
   const handleInsertRecord = async () => {
     await supabase.from("investRecords").insert([
       {
@@ -188,7 +180,6 @@ export default function FilmInvestDetailPage() {
       },
     ]);
   };
-
   const { isSuccess: isAllowSuccess } = useWaitForTransactionReceipt({
     hash: allowHash,
   });
@@ -205,16 +196,14 @@ export default function FilmInvestDetailPage() {
     if (allowBalanceUnit) {
       setHasApproved(Number(allowBalanceUnit) >= totalPrice);
     }
-  }, [amount, currentPrice, filmTokenBalance, decimals]);
-
-  useEffect(() => {
-    if (isAllowSuccess) {
-      setAllowHash("0x");
-      setIsApproving(false);
-      setHasApproved(true);
-      allowBlanceRefetch();
-    }
-  }, [isAllowSuccess]);
+  }, [
+    amount,
+    currentPrice,
+    filmTokenBalance,
+    decimals,
+    allowBalanceUnit,
+    totalPrice,
+  ]);
 
   const handleInvest = async () => {
     console.log(
@@ -248,7 +237,19 @@ export default function FilmInvestDetailPage() {
     });
     setAllowHash(tx);
   };
-
+  if (investSuccess) {
+    collectBalanceRefetch();
+    filmRecordsRefetch();
+    setInvesting(false);
+    handleInsertRecord();
+    setHash("0x");
+  }
+  if (isAllowSuccess) {
+    setAllowHash("0x");
+    setIsApproving(false);
+    setHasApproved(true);
+    allowBlanceRefetch();
+  }
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-400">

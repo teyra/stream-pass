@@ -8,6 +8,7 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
+import Image from "next/image";
 
 export default function FilmInvestPage() {
   const mockFilms = Array.from({ length: 8 }, (_, i) => ({
@@ -23,17 +24,15 @@ export default function FilmInvestPage() {
   const [investingId, setInvestingId] = useState<number | null>(null);
   const [amount, setAmount] = useState("");
   const { address } = useAccount();
-  console.log("🚀 ~ FilmInvestPage ~ address:", address);
 
   const [hash, setHash] = useState<`0x${string}`>("0x");
 
   const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS;
 
   const investAddress = process.env.NEXT_PUBLIC_INVEST_ADDRESS;
-  const transactionReceipt = useWaitForTransactionReceipt({
+  useWaitForTransactionReceipt({
     hash,
   });
-  console.log("🚀 ~ handleInvest ~ transactionReceipt:", transactionReceipt);
   const { data: allowance } = useReadContract({
     abi: erc20Abi,
     address: USDC_ADDRESS,
@@ -51,11 +50,6 @@ export default function FilmInvestPage() {
     address: USDC_ADDRESS,
     functionName: "decimals",
   });
-  console.log("🚀 ~ FilmInvestPage ~ decimals:", decimals);
-  console.log("余额:", balance);
-  console.log("授权额度:", allowance);
-  console.log(error);
-
   const handleInvest = async (id: number) => {
     const myBalance = (balance && formatUnits(balance, decimals || 18)) || 0;
     console.log("🚀 ~ handlePurchase ~ myBalance:", myBalance);
@@ -117,7 +111,7 @@ export default function FilmInvestPage() {
             key={film.id}
             className="bg-[#181a20] rounded-xl shadow-lg overflow-hidden"
           >
-            <img
+            <Image
               src={film.cover}
               alt={film.title}
               className="w-full h-56 object-cover"

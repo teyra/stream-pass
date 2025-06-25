@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/supabase";
 import { Button } from "@arco-design/web-react";
 import lighthouse from "@lighthouse-web3/sdk";
+import Image from "next/image";
 
 interface Props {
   onSuccess: (filmId: number) => void;
@@ -27,8 +28,6 @@ export default function InsertMovie({ onSuccess }: Props) {
   });
 
   const [loading, setLoading] = useState(false);
-
-  
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -117,7 +116,7 @@ export default function InsertMovie({ onSuccess }: Props) {
           className="text-white"
         />
         {form.posterUrl && (
-          <img
+          <Image
             src={form.posterUrl}
             alt="Poster Preview"
             className="mt-2 w-32 h-auto rounded shadow border border-gray-600"

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Message } from "@arco-design/web-react";
 import { supabase } from "@/supabase";
 import { useAccount } from "wagmi";
+import Image from "next/image";
 
 interface InvestRecord {
   id: string;
@@ -24,12 +25,13 @@ export default function MyCreatedInvestments() {
   const [loading, setLoading] = useState(true);
   const { address } = useAccount();
 
-  const fetchRecords = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("invests")
-      .select(
-        `
+  useEffect(() => {
+    const fetchRecords = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("invests")
+        .select(
+          `
         *,
         films (
           id,
@@ -38,17 +40,15 @@ export default function MyCreatedInvestments() {
           posterUrl
         )
       `
-      )
-      .eq("creator", address)
-      .order("created_at", { ascending: false }); // ✅ 按创建时间倒序
+        )
+        .eq("creator", address)
+        .order("created_at", { ascending: false }); // ✅ 按创建时间倒序
 
-    if (data) {
-      setRecords(data as InvestRecord[]);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
+      if (data) {
+        setRecords(data as InvestRecord[]);
+      }
+      setLoading(false);
+    };
     if (address) fetchRecords();
   }, [address]);
 
@@ -96,7 +96,7 @@ export default function MyCreatedInvestments() {
             >
               {/* 封面 */}
               {rec.films.posterUrl ? (
-                <img
+                <Image
                   src={rec.films.posterUrl}
                   alt="poster"
                   className="w-full h-48 object-cover group-hover:brightness-110 transition duration-300"

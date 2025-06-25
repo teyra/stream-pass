@@ -35,30 +35,16 @@ export default function InvestDetailPage() {
     hash,
   });
 
-  useEffect(() => {
-    if (isSuccess) {
-      refetch();
-      setHash("0x");
-      setInitialAmount(0);
-      toast.success("FilmToken 铸造成功");
-    }
-  }, [isSuccess]);
-
   const { isSuccess: priceIsSuccess } = useWaitForTransactionReceipt({
     hash: priceHash,
   });
+
   useEffect(() => {
-    if (priceIsSuccess) {
-      tokenInUsdcRefetch();
-      setPriceHash("0x");
-      toast.success("更新 FilmToken 单价成功");
-    }
-  }, [priceIsSuccess]);
-  const fetchInvestDetail = async () => {
-    const { data, error } = await supabase
-      .from("invests")
-      .select(
-        `
+    const fetchInvestDetail = async () => {
+      const { data, error } = await supabase
+        .from("invests")
+        .select(
+          `
         *,
         films (
           title,
@@ -67,15 +53,14 @@ export default function InvestDetailPage() {
           contract_address
         )
       `
-      )
-      .eq("id", id)
-      .single();
-    if (!data || error) {
-      return notFound();
-    }
-    setInvest(data);
-  };
-  useEffect(() => {
+        )
+        .eq("id", id)
+        .single();
+      if (!data || error) {
+        return notFound();
+      }
+      setInvest(data);
+    };
     fetchInvestDetail();
   }, [id]);
 
@@ -127,6 +112,7 @@ export default function InvestDetailPage() {
       toast.error(err);
     }
   };
+
   const updateTokenPrice = async () => {
     console.log("🚀 ~ updateTokenPrice ~ invest.films:", invest.films);
     try {
@@ -166,6 +152,23 @@ export default function InvestDetailPage() {
       toast.error("更新 Token 单价失败，请稍后重试");
     }
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      refetch();
+      setHash("0x");
+      setInitialAmount(0);
+      toast.success("FilmToken 铸造成功");
+    }
+  }, [isSuccess, refetch, toast]);
+
+  useEffect(() => {
+    if (priceIsSuccess) {
+      tokenInUsdcRefetch();
+      setPriceHash("0x");
+      toast.success("更新 FilmToken 单价成功");
+    }
+  }, [priceIsSuccess, tokenInUsdcRefetch, toast]);
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4">

@@ -1,22 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  Button,
-  Message,
-  Typography,
-  Space,
-} from "@arco-design/web-react";
+import { useCallback, useEffect, useState } from "react";
+import { Button, Space } from "@arco-design/web-react";
 import {
   useAccount,
   useDeployContract,
   useWaitForTransactionReceipt,
-  useWriteContract,
 } from "wagmi";
-import { bytecode, filmTokenInvestAbi, initFilmTokenAbi } from "@/abi/invest";
+import { bytecode, filmTokenInvestAbi } from "@/abi/invest";
 import { Address } from "viem";
 import { supabase } from "@/supabase";
-const { Text } = Typography;
 interface Props {
   film: any;
   filmTokenAddress: `0x${string}`;
@@ -36,54 +29,44 @@ export default function DeployInvestmentContract({
     hash,
   });
 
+  const generateRandom16Digit = () => {
+    const min = 1e15; // 1000000000000000
+    const max = 9.999999999999999e15; // 9999999999999999
+    return Math.floor(Math.random() * (max - min)) + min;
+  };
+  const setContractAddress = useCallback(
+    async (contractAddress: Address) => {
+      await supabase.from("invests").insert([
+        {
+          film: film.id,
+          contractAddress,
+          creator: address,
+          tokenId: generateRandom16Digit(),
+        },
+      ]);
+      onDeployed(contractAddress);
+    },
+    [film.id, address, onDeployed]
+  );
   useEffect(() => {
     if (isSuccess) {
       setContractInfo(receipt);
       setHash("0x");
       setContractAddress(receipt.contractAddress as Address);
     }
-  }, [isSuccess]);
-  const generateRandom16Digit = () => {
-    const min = 1e15; // 1000000000000000
-    const max = 9.999999999999999e15; // 9999999999999999
-    return Math.floor(Math.random() * (max - min)) + min;
-  };
-  const setContractAddress = async (contractAddress: Address) => {
-    console.log(film.id, address);
-    await supabase.from("invests").insert([
-      {
-        film: film.id,
-        contractAddress,
-        creator: address,
-        tokenId: generateRandom16Digit(),
-      },
-    ]);
-    onDeployed(contractAddress);
-  };
+  }, [isSuccess, receipt, setContractAddress]);
   const usdcTokenAddress = process.env.NEXT_PUBLIC_USDC_ADDRESS;
   const usdcAggregator = process.env.NEXT_PUBLIC_USDC_USD_AGGREGATOR;
   const usdcHeartbeat = Number(process.env.NEXT_PUBLIC_USDC_USD_HEARTBEAT);
   const { deployContractAsync } = useDeployContract();
 
   const deployContract = async () => {
-    try {
-      const tx = await deployContractAsync({
-        abi: filmTokenInvestAbi,
-        args: [
-          filmTokenAddress,
-          usdcTokenAddress,
-          usdcAggregator,
-          usdcHeartbeat,
-        ],
-        bytecode: bytecode as `0x${string}`,
-      });
-      setHash(tx);
-      // Message.success("🎉 投资合约部署中，请稍等确认地址…");
-      // setInvestmentAddress(contractInfo);
-    } catch (err: any) {
-      // Message.error("投资合约部署失败：" + err.message);
-    } finally {
-    }
+    const tx = await deployContractAsync({
+      abi: filmTokenInvestAbi,
+      args: [filmTokenAddress, usdcTokenAddress, usdcAggregator, usdcHeartbeat],
+      bytecode: bytecode as `0x${string}`,
+    });
+    setHash(tx);
   };
 
   return (

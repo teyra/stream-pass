@@ -103,7 +103,7 @@ export default function FilmInvestDetailPage() {
     abi: erc1155Abi,
     address: asset?.film.contract_address,
     functionName: "uri",
-    args: [asset?.invest?.tokenId],
+    args: [BigInt(asset?.invest?.tokenId ?? 0)],
   });
 
   // Fetch metadata from tokenURI
@@ -114,10 +114,14 @@ export default function FilmInvestDetailPage() {
           const url = tokenURI.replace("ipfs://", "https://ipfs.io/ipfs/");
           const response = await fetch(url);
           const metadata = await response.json();
-          setAsset((prev) => ({
-            ...prev,
-            metadata,
-          }));
+          setAsset((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  metadata,
+                }
+              : prev
+          );
         } catch (error) {
           console.error("Error fetching metadata:", error);
         }
@@ -131,7 +135,7 @@ export default function FilmInvestDetailPage() {
     abi: erc1155Abi,
     address: asset?.film.contract_address,
     functionName: "balanceOf",
-    args: [address as `0x${string}`, asset?.invest?.tokenId],
+    args: [address as `0x${string}`, BigInt(asset?.invest?.tokenId ?? 0)],
   });
 
   if (!asset) {

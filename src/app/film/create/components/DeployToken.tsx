@@ -25,13 +25,6 @@ export default function DeployToken({ film, onSuccess }: Props) {
   const { data: receipt, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
-  useEffect(() => {
-    if (isSuccess) {
-      setContractInfo(receipt);
-      setContractAddress(receipt.contractAddress as Address);
-      setHash("0x");
-    }
-  }, [isSuccess]);
 
   const setContractAddress = async (address: Address) => {
     console.log(film.id, address);
@@ -40,6 +33,7 @@ export default function DeployToken({ film, onSuccess }: Props) {
       .update({ contract_address: address })
       .eq("id", film.id);
   };
+
   const { deployContractAsync } = useDeployContract();
 
   const handleIssueToken = async () => {
@@ -62,7 +56,11 @@ export default function DeployToken({ film, onSuccess }: Props) {
       setLoading(false);
     }
   };
-
+  if (isSuccess) {
+    setContractInfo(receipt);
+    setContractAddress(receipt.contractAddress as Address);
+    setHash("0x");
+  }
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-6 bg-[#181a20] p-6 rounded-xl">

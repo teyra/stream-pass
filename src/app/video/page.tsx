@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -69,7 +70,7 @@ export default function VideoList() {
             className="relative w-full bg-black overflow-hidden"
             style={{ aspectRatio: "16/9" }}
           >
-            <img
+            <Image
               src={video.thumbnail}
               alt={video.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -101,7 +102,7 @@ export default function VideoList() {
           className="relative w-full overflow-hidden"
           style={{ aspectRatio: 1 }}
         >
-          <img
+          <Image
             src={video.thumbnail}
             alt={video.title}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
