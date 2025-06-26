@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@arco-design/web-react";
 import { useDeployContract, useWaitForTransactionReceipt } from "wagmi";
 import { byteCode, filmTokenAbi } from "@/abi/film";

@@ -7,6 +7,7 @@ declare namespace NodeJS {
     NEXT_PUBLIC_USDC_ADDRESS: "0x${string}";
     NEXT_PUBLIC_INVEST_ADDRESS: "0x${string}";
     NEXT_PUBLIC_FILM_TOKEN_ADDRESS: "0x${string}";
+    NEXT_PUBLIC_LOTTERY_CONTRACT_ADDRESS: "0x${string}";
     NEXT_PUBLIC_SUPABASE_URL: string;
     NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
     NEXT_PUBLIC_LIGHTHOUSE_API_KEY: string;

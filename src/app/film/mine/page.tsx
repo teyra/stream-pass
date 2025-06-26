@@ -1,10 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button, Message } from "@arco-design/web-react";
+import { Button, Message, Image } from "@arco-design/web-react";
 import { supabase } from "@/supabase";
 import { useAccount } from "wagmi";
-import Image from "next/image";
 
 interface InvestRecord {
   id: string;
@@ -52,11 +51,6 @@ export default function MyCreatedInvestments() {
     if (address) fetchRecords();
   }, [address]);
 
-  const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
-    Message.success("合约地址已复制");
-  };
-
   const shortAddress = (addr: string) =>
     addr.slice(0, 6) + "..." + addr.slice(-4);
 
@@ -99,10 +93,10 @@ export default function MyCreatedInvestments() {
                 <Image
                   src={rec.films.posterUrl}
                   alt="poster"
-                  className="w-full h-48 object-cover group-hover:brightness-110 transition duration-300"
+                  className=" object-contain group-hover:brightness-110 transition duration-300"
                 />
               ) : (
-                <div className="w-full h-48 bg-[#2c2c2c] flex items-center justify-center text-gray-500">
+                <div className=" bg-[#2c2c2c] flex items-center justify-center text-gray-500">
                   无封面图
                 </div>
               )}
@@ -127,7 +121,7 @@ export default function MyCreatedInvestments() {
                   type="outline"
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/film/main/${rec.id}`);
+                    router.push(`/film/mine/${rec.id}`);
                   }}
                   className="mt-3 text-[#4abba1] border-[#4abba1] hover:bg-[#4abba1]/20 w-full"
                 >

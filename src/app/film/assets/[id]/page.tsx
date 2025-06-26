@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 import { Button, Input, Modal } from "@arco-design/web-react";
 import { useToast } from "@/hooks/useToast";
 import { crossChainBurnAbi } from "@/abi/film";
+import { lotteryABI } from "@/abi/lottery";
 
 export default function FilmInvestDetailPage() {
   // 类型定义
@@ -55,11 +56,12 @@ export default function FilmInvestDetailPage() {
   const [amount, setAmount] = useState("");
   const [txLoading, setTxLoading] = useState(false);
   const [hash, setHash] = useState<`0x${string}`>("0x");
+  const [lotteryHash, setLotteryHash] = useState<`0x${string}`>("0x");
 
   const toast = useToast();
-  // const reciverAddress = process.env.NEXT_PUBLIC_RECIVER_ADDRESS;
-  const reciverAddress = "0x931987036840C213ED289d46147Cb7E1e2c18b6D"; // 替换为实际接收地址
-  const { data: isSuccess } = useWaitForTransactionReceipt({
+  const lotteryAddress = process.env.NEXT_PUBLIC_LOTTERY_CONTRACT_ADDRESS;
+  const reciverAddress = "0x1DC1Bd776dF84861956d44b3c053e4493eedDC67"; // 替换为实际接收地址
+  const { isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
   useEffect(() => {
@@ -70,6 +72,18 @@ export default function FilmInvestDetailPage() {
       toast.success("Cross-chain transfer submitted!");
     }
   }, [isSuccess, toast]);
+
+  const { isSuccess: isLotterySuccess } = useWaitForTransactionReceipt({
+    hash: lotteryHash,
+  });
+  useEffect(() => {
+    if (isLotterySuccess) {
+      console.log("🚀 ~ useEffect ~ isLotterySuccess:", isLotterySuccess);
+      setLotteryHash("0x");
+      setTxLoading(false);
+      toast.success("Participate Success!");
+    }
+  }, [isLotterySuccess, toast]);
 
   // Fetch asset record from supabase
 
@@ -188,6 +202,17 @@ export default function FilmInvestDetailPage() {
     console.log("Cross-chain transfer transaction hash:", tx);
   };
 
+  const handleParticipate = async () => {
+    setTxLoading(true);
+    const tx = await writeContractAsync({
+      abi: lotteryABI,
+      address: lotteryAddress,
+      functionName: "enterLottery",
+      args: [address as `0x${string}`],
+    });
+    setLotteryHash(tx);
+  };
+
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
       <div className="bg-[#181a20] rounded-2xl shadow-2xl p-6 flex flex-col items-center">
@@ -253,14 +278,25 @@ export default function FilmInvestDetailPage() {
             {asset?.film?.plotSummary}
           </div>
         </div>
-        {/* 跨链转移按钮 */}
-        <Button
-          type="primary"
-          className="w-full bg-gradient-to-r from-[#4abba1] to-[#8be9fd] text-black font-bold rounded-lg"
-          onClick={() => setModalVisible(true)}
-        >
-          Cross-chain Transfer
-        </Button>
+        <div className="flex gap-4 w-full">
+          {/* 跨链转移按钮 */}
+          <Button
+            type="primary"
+            className="flex-1 bg-gradient-to-r from-[#4abba1] to-[#8be9fd] text-black font-bold py-3 rounded-xl shadow hover:scale-105 transition"
+            onClick={() => setModalVisible(true)}
+          >
+            Cross-chain Transfer
+          </Button>
+
+          {/* 参与抽奖活动按钮 */}
+          <Button
+            type="primary"
+            className="flex-1 bg-gradient-to-r from-[#cea00a] to-[#958e10] text-black font-bold py-3 rounded-xl shadow hover:scale-105 transition"
+            onClick={() => handleParticipate()}
+          >
+            Participate in Lottery
+          </Button>
+        </div>
       </div>
       {/* 跨链弹窗 */}
       <Modal
