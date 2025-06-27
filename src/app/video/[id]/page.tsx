@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount, useChainId, useReadContract } from "wagmi";
 import Image from "next/image";
+import { getChainConfig } from "@/config/chainConfig";
 
 const getRandomMovieTitle = () => {
   const movieTitles = [
@@ -35,7 +36,7 @@ const allVideos = Array.from({ length: 50 }, (_, i) => ({
 }));
 
 export default function VideoDetailPage() {
-  const vipAddress = process.env.NEXT_PUBLIC_SPT_ADDRESS;
+  const vipAddress = getChainConfig(useChainId()).sptVipAddress;
   const { id } = useParams();
   const [video, setVideo] = useState<any>(null);
   const { address } = useAccount();

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   useAccount,
+  useChainId,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -13,8 +14,9 @@ import Image from "next/image";
 import dayjs from "dayjs";
 import { Button, Input, Modal } from "@arco-design/web-react";
 import { useToast } from "@/hooks/useToast";
-import { crossChainBurnAbi } from "@/abi/film";
+import { filmTokenAbi } from "@/abi/film";
 import { lotteryABI } from "@/abi/lottery";
+import { getChainConfig } from "@/config/chainConfig";
 
 export default function FilmInvestDetailPage() {
   // 类型定义
@@ -27,17 +29,14 @@ export default function FilmInvestDetailPage() {
     stars?: string[] | string;
     director?: string;
     plotSummary?: string;
-  };
-
-  type Invest = {
-    tokenId: number;
-    created_at?: string;
+    id: string;
   };
 
   type Asset = {
     id: number;
+    tokenId: string;
     film: Film;
-    invest: Invest;
+    created_at: string;
     metadata?: {
       name?: string;
       description?: string;
@@ -53,14 +52,23 @@ export default function FilmInvestDetailPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [targetChain, setTargetChain] = useState("Sepolia");
   const [toAddress, setToAddress] = useState("");
+  const [reciverAddress, setReciverAddress] = useState("");
+
   const [amount, setAmount] = useState("");
   const [txLoading, setTxLoading] = useState(false);
   const [hash, setHash] = useState<`0x${string}`>("0x");
   const [lotteryHash, setLotteryHash] = useState<`0x${string}`>("0x");
 
   const toast = useToast();
-  const lotteryAddress = process.env.NEXT_PUBLIC_LOTTERY_CONTRACT_ADDRESS;
-  const reciverAddress = "0x1DC1Bd776dF84861956d44b3c053e4493eedDC67"; // 替换为实际接收地址
+
+  const chainId = useChainId();
+
+  const lotteryContractAddress =
+    chainId !== 1 && getChainConfig(chainId)
+      ? getChainConfig(chainId)!.lotteryContractAddress
+      : "0x";
+
+  // const reciverAddress = "0xcca46e3502d0a1907cad9e9f949d7affe4a282bf"; // 替换为实际接收地址
   const { isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
@@ -69,16 +77,27 @@ export default function FilmInvestDetailPage() {
       setHash("0x");
       setTxLoading(false);
       setModalVisible(false);
+      handleBurnAsset();
       toast.success("Cross-chain transfer submitted!");
     }
   }, [isSuccess, toast]);
-
+  const handleBurnAsset = async () => {
+    await supabase.from("assets").insert([
+      {
+        film: asset?.film?.id,
+        tokenId: asset?.tokenId,
+        amount: -amount,
+        type: 2,
+        owner: address,
+        chainId,
+      },
+    ]);
+  };
   const { isSuccess: isLotterySuccess } = useWaitForTransactionReceipt({
     hash: lotteryHash,
   });
   useEffect(() => {
     if (isLotterySuccess) {
-      console.log("🚀 ~ useEffect ~ isLotterySuccess:", isLotterySuccess);
       setLotteryHash("0x");
       setTxLoading(false);
       toast.success("Participate Success!");
@@ -89,20 +108,16 @@ export default function FilmInvestDetailPage() {
 
   const fetchAssets = async () => {
     const { data, error } = await supabase
-      .from("investRecords")
+      .from("assets")
       .select(
         `
         *,
-        film (*),
-        invest (*)
+        film (*)
       `
       )
       .eq("id", id)
       .single();
     setAsset(data);
-    if (error) {
-      console.error("Error fetching assets:", error);
-    }
   };
 
   useEffect(() => {
@@ -117,7 +132,7 @@ export default function FilmInvestDetailPage() {
     abi: erc1155Abi,
     address: asset?.film.contract_address,
     functionName: "uri",
-    args: [BigInt(asset?.invest?.tokenId ?? 0)],
+    args: [BigInt(asset?.tokenId ?? 0)],
   });
 
   // Fetch metadata from tokenURI
@@ -149,7 +164,7 @@ export default function FilmInvestDetailPage() {
     abi: erc1155Abi,
     address: asset?.film.contract_address,
     functionName: "balanceOf",
-    args: [address as `0x${string}`, BigInt(asset?.invest?.tokenId ?? 0)],
+    args: [address as `0x${string}`, BigInt(asset?.tokenId ?? 0)],
   });
 
   if (!asset) {
@@ -162,14 +177,14 @@ export default function FilmInvestDetailPage() {
 
   // 卡片属性展示
   const attributes = [
-    { label: "Token ID", value: asset?.invest?.tokenId },
+    { label: "Token ID", value: asset?.tokenId },
     { label: "Balance", value: balance?.toString() ?? 0 },
     { label: "Owner", value: address },
     { label: "Contract", value: asset?.film?.contract_address },
     {
       label: "Minted",
-      value: asset?.invest?.created_at
-        ? dayjs(asset.invest.created_at).format("YYYY-MM-DD HH:mm")
+      value: asset?.created_at
+        ? dayjs(asset?.created_at).format("YYYY-MM-DD HH:mm")
         : "--",
     },
     { label: "Genre", value: asset?.film?.genre },
@@ -187,12 +202,12 @@ export default function FilmInvestDetailPage() {
   const handleCrossChain = async () => {
     setTxLoading(true);
     const tx = await writeContractAsync({
-      abi: crossChainBurnAbi,
+      abi: filmTokenAbi,
       address: asset?.film.contract_address,
       functionName: "crossChainBurn",
       args: [
         toAddress as `0x${string}`,
-        asset?.invest?.tokenId,
+        asset?.tokenId,
         amount,
         reciverAddress as `0x${string}`,
         1,
@@ -206,7 +221,7 @@ export default function FilmInvestDetailPage() {
     setTxLoading(true);
     const tx = await writeContractAsync({
       abi: lotteryABI,
-      address: lotteryAddress,
+      address: lotteryContractAddress,
       functionName: "enterLottery",
       args: [address as `0x${string}`],
     });
@@ -328,9 +343,16 @@ export default function FilmInvestDetailPage() {
             allowClear
           />
           <Input
-            placeholder="Recipient Address"
+            placeholder="to Address"
             value={toAddress}
             onChange={setToAddress}
+            className="mb-4"
+            allowClear
+          />
+          <Input
+            placeholder="Recipient Address"
+            value={reciverAddress}
+            onChange={setReciverAddress}
             className="mb-4"
             allowClear
           />

@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import { Button } from "@arco-design/web-react";
-import { useDeployContract, useWaitForTransactionReceipt } from "wagmi";
+import {
+  useChainId,
+  useDeployContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { byteCode, filmTokenAbi } from "@/abi/film";
 import { supabase } from "@/supabase";
 import { Address } from "viem";
+import { getChainConfig } from "@/config/chainConfig";
 
 interface Props {
   film: any;
@@ -13,19 +18,17 @@ interface Props {
 }
 
 export default function DeployToken({ film, onSuccess }: Props) {
+  const chainId = useChainId();
+  const { functionsRouter, ccipRouter, linkToken, chainSelector } =
+    getChainConfig(chainId);
   const tokenUri =
     "https://mammoth-plum-sheep.myfilebase.com/ipfs/QmdZFhapTKKfrv4R3BLydoQrK7sWzpXanpyubm8xkKbwHt";
-  const functionsRouterAddress = "0xA9d587a00A31A52Ed70D6026794a8FC5E2F5dCb0";
-  const ccipRouterAddress = "0xF694E193200268f9a4868e4Aa017A0118C9a8177";
-  const linkTokenAddress = process.env.NEXT_PUBLIC_LINK_TOKEN_ADDRESS;
-  const destinationChainSelector = "16015286601757825753";
   const [loading, setLoading] = useState(false);
   const [hash, setHash] = useState<`0x${string}`>("0x");
   const [contractInfo, setContractInfo] = useState<any>(null);
   const { data: receipt, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
-
   const setContractAddress = async (address: Address) => {
     console.log(film.id, address);
     await supabase
@@ -41,13 +44,7 @@ export default function DeployToken({ film, onSuccess }: Props) {
       setLoading(true);
       const tx = await deployContractAsync({
         abi: filmTokenAbi,
-        args: [
-          tokenUri,
-          functionsRouterAddress,
-          ccipRouterAddress,
-          linkTokenAddress,
-          destinationChainSelector,
-        ],
+        args: [tokenUri, functionsRouter, ccipRouter, linkToken, chainSelector],
         bytecode: byteCode as `0x${string}`,
       });
       setHash(tx);
@@ -64,29 +61,32 @@ export default function DeployToken({ film, onSuccess }: Props) {
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-6 bg-[#181a20] p-6 rounded-xl">
-        {/* 左边：铸造区域 */}
-        <div className=" shadow space-y-4 md:w-1/2">
+        {/* Left: Minting Area */}
+        <div className="shadow space-y-4 md:w-1/2">
           <h2 className="text-xl text-[#8be9fd] font-bold">
-            Step 2: 为你的电影发布专属数字徽章，让粉丝参与共创
+            Step 2: Issue a unique digital badge for your film and let fans
+            co-create
           </h2>
 
           <div className="text-gray-300">
-            电影: <span className="text-white">{film.title}</span>
+            Film: <span className="text-white">{film.title}</span>
           </div>
 
           <Button type="primary" loading={loading} onClick={handleIssueToken}>
-            发布数字徽章
+            Issue Digital Badge
           </Button>
         </div>
 
-        {/* 右边：Token 信息展示 */}
-        <div className=" shadow space-y-4 md:w-1/2 text-sm text-gray-200">
-          <h2 className="text-lg text-[#f1fa8c] font-bold">🎬 数字徽章信息</h2>
+        {/* Right: Token Info Display */}
+        <div className="shadow space-y-4 md:w-1/2 text-sm text-gray-200">
+          <h2 className="text-lg text-[#f1fa8c] font-bold">
+            🎬 Digital Badge Info
+          </h2>
 
           {contractInfo ? (
             <>
               <div>
-                ✅ <span className="text-green-400 font-semibold">已发行</span>
+                ✅ <span className="text-green-400 font-semibold">Issued</span>
               </div>
               <div>
                 📦 Contract Address:{" "}
@@ -111,7 +111,9 @@ export default function DeployToken({ film, onSuccess }: Props) {
               </div>
             </>
           ) : (
-            <div className="text-gray-400">🔄 等待铸造后展示信息...</div>
+            <div className="text-gray-400">
+              🔄 Info will be displayed after minting...
+            </div>
           )}
         </div>
       </div>
@@ -122,7 +124,7 @@ export default function DeployToken({ film, onSuccess }: Props) {
           disabled={!contractInfo}
           onClick={() => onSuccess(contractInfo)}
         >
-          下一步
+          Next Step
         </Button>
       </div>
     </div>

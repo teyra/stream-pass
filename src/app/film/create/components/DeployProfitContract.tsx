@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Button, Space } from "@arco-design/web-react";
 import {
   useAccount,
+  useChainId,
   useDeployContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { bytecode, filmTokenInvestAbi } from "@/abi/invest";
+import { bytecode, investAbi } from "@/abi/invest";
 import { Address } from "viem";
 import { supabase } from "@/supabase";
+import { getChainConfig } from "@/config/chainConfig";
 interface Props {
   film: any;
   filmTokenAddress: `0x${string}`;
@@ -24,7 +26,7 @@ export default function DeployInvestmentContract({
   const [hash, setHash] = useState<`0x${string}`>("0x");
   const [contractInfo, setContractInfo] = useState<any>(null);
   const { address } = useAccount();
-
+  const chainId = useChainId();
   const { data: receipt, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
@@ -42,6 +44,7 @@ export default function DeployInvestmentContract({
           contractAddress,
           creator: address,
           tokenId: generateRandom16Digit(),
+          chainId,
         },
       ]);
       onDeployed(contractAddress);
@@ -55,14 +58,16 @@ export default function DeployInvestmentContract({
       setContractAddress(receipt.contractAddress as Address);
     }
   }, [isSuccess, receipt, setContractAddress]);
-  const usdcTokenAddress = process.env.NEXT_PUBLIC_USDC_ADDRESS;
-  const usdcAggregator = process.env.NEXT_PUBLIC_USDC_USD_AGGREGATOR;
+
+  const { usdcToken, usdcUsdAggregatorAddress } = getChainConfig(chainId);
+  const usdcTokenAddress = usdcToken;
+  const usdcAggregator = usdcUsdAggregatorAddress;
   const usdcHeartbeat = Number(process.env.NEXT_PUBLIC_USDC_USD_HEARTBEAT);
   const { deployContractAsync } = useDeployContract();
 
   const deployContract = async () => {
     const tx = await deployContractAsync({
-      abi: filmTokenInvestAbi,
+      abi: investAbi,
       args: [filmTokenAddress, usdcTokenAddress, usdcAggregator, usdcHeartbeat],
       bytecode: bytecode as `0x${string}`,
     });
@@ -72,20 +77,21 @@ export default function DeployInvestmentContract({
   return (
     <div className="bg-[#181a20] p-6 rounded-xl shadow space-y-4">
       <h2 className="text-xl text-[#8be9fd] font-bold">
-        Step 3: 启动作品支持与收益计划
+        Step 3: Launch Support & Profit Sharing Plan
       </h2>
 
       <div className="text-gray-300">
-        链接电影合约: <span className="text-white">{filmTokenAddress}</span>
+        Link Film Contract:{" "}
+        <span className="text-white">{filmTokenAddress}</span>
       </div>
       <Space direction="vertical" size="medium">
         <Button type="primary" onClick={deployContract}>
-          启动计划
+          Launch Plan
         </Button>
 
         {contractInfo && (
           <div className="text-green-400 mt-4">
-            ✅ 合约部署成功: {contractInfo.contractAddress}
+            ✅ Contract deployed successfully: {contractInfo.contractAddress}
             <br />
           </div>
         )}

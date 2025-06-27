@@ -3,6 +3,7 @@ import { supabase } from "@/supabase";
 import { useParams, notFound } from "next/navigation";
 import Image from "next/image";
 import {
+  useChainId,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -10,8 +11,10 @@ import {
 import { erc20Abi, formatUnits, parseAbi } from "viem";
 import { Button, Input } from "@arco-design/web-react";
 import { useEffect, useState } from "react";
-import { initFilmTokenAbi, updatePriceFeedAbi } from "@/abi/invest";
+import { investAbi } from "@/abi/invest";
+import { filmTokenAbi } from "@/abi/film";
 import { useToast } from "@/hooks/useToast";
+import { getChainConfig } from "@/config/chainConfig";
 
 export default function InvestDetailPage() {
   const { id } = useParams();
@@ -22,14 +25,12 @@ export default function InvestDetailPage() {
   const [priceHash, setPriceHash] = useState<`0x${string}`>("0x");
 
   const { writeContractAsync } = useWriteContract();
-
+  const { usdcToken, donId } = getChainConfig(useChainId());
   const slotId = process.env.NEXT_PUBLIC_DON_HOSTED_SECRETS_SLOT_ID;
   const version = process.env.NEXT_PUBLIC_DON_HOSTED_SECRETS_VERSION;
-  const donId = process.env.NEXT_PUBLIC_DON_ID;
-
   const subId = process.env.NEXT_PUBLIC_CHAINLINK_SUBSCRIPTION_ID;
   const gasLimit = process.env.NEXT_PUBLIC_CHAINLINK_GAS_LIMIT;
-  const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS;
+  const USDC_ADDRESS = usdcToken;
 
   const { isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -93,23 +94,23 @@ export default function InvestDetailPage() {
   console.log("🚀 ~ InvestDetailPage ~ tokenInUsdc:", tokenInUsdc);
   const initializeTokens = async () => {
     if (!invest.contractAddress) {
-      toast.error("投资合约地址未设置");
+      toast.error("Investment contract address is not set");
       return;
     }
     if (initialAmount <= 0) {
-      toast.error("初始金额必须大于0");
+      toast.error("Initial amount must be greater than 0");
       return;
     }
     try {
       const tx = await writeContractAsync({
-        abi: initFilmTokenAbi,
+        abi: investAbi,
         address: invest.contractAddress as `0x${string}`,
         functionName: "initFilmToken",
         args: [invest.tokenId, initialAmount, "0x"],
       });
       setHash(tx);
     } catch (err: any) {
-      toast.error(err);
+      toast.error(err?.message || "Minting failed");
     }
   };
 
@@ -117,25 +118,11 @@ export default function InvestDetailPage() {
     console.log("🚀 ~ updateTokenPrice ~ invest.films:", invest.films);
     try {
       if (!invest.films.contract_address) {
-        toast.error("投资合约地址未设置");
+        toast.error("Investment contract address is not set");
         return;
       }
-      console.log({
-        abi: updatePriceFeedAbi,
-        address: invest.films?.contract_address as `0x${string}`,
-        functionName: "updateInvestmentCost",
-        args: [
-          slotId,
-          version,
-          [String(invest.tokenId), String(invest.film)],
-          subId,
-          gasLimit,
-          donId,
-        ],
-      });
-
       const tx = await writeContractAsync({
-        abi: updatePriceFeedAbi,
+        abi: filmTokenAbi,
         address: invest.films?.contract_address as `0x${string}`,
         functionName: "updateInvestmentCost",
         args: [
@@ -149,7 +136,23 @@ export default function InvestDetailPage() {
       });
       setPriceHash(tx);
     } catch (err) {
-      toast.error("更新 Token 单价失败，请稍后重试");
+      toast.error("Failed to update token price, please try again later");
+    }
+  };
+
+  const distributeDividends = async () => {
+    try {
+      const tx = await writeContractAsync({
+        abi: investAbi,
+        address: invest.contractAddress as `0x${string}`,
+        functionName: "distributeProfit",
+        args: [invest.tokenId, 1000],
+      });
+      // setHash(tx);
+      // TODO: Implement dividend distribution logic here
+      toast.success("Dividend distribution triggered (demo)");
+    } catch (err) {
+      toast.error("Failed to distribute dividends, please try again later");
     }
   };
 
@@ -158,7 +161,7 @@ export default function InvestDetailPage() {
       refetch();
       setHash("0x");
       setInitialAmount(0);
-      toast.success("FilmToken 铸造成功");
+      toast.success("FilmToken minted successfully");
     }
   }, [isSuccess, refetch, toast]);
 
@@ -166,7 +169,7 @@ export default function InvestDetailPage() {
     if (priceIsSuccess) {
       tokenInUsdcRefetch();
       setPriceHash("0x");
-      toast.success("更新 FilmToken 单价成功");
+      toast.success("FilmToken price updated successfully");
     }
   }, [priceIsSuccess, tokenInUsdcRefetch, toast]);
 
@@ -185,18 +188,17 @@ export default function InvestDetailPage() {
             />
           ) : (
             <div className="bg-gray-800 w-full h-64 flex items-center justify-center text-gray-500 rounded-xl">
-              无封面图
+              No poster
             </div>
           )}
         </div>
-
         <div className="flex-1 space-y-4">
           <h1 className="text-3xl font-bold text-white">
             {invest.films?.title}
           </h1>
-          <p className="text-gray-400">导演：{invest.films?.director}</p>
+          <p className="text-gray-400">Director: {invest.films?.director}</p>
           <p className="text-gray-500 text-sm">
-            创建时间：{new Date(invest.created_at).toLocaleString()}
+            Created at: {new Date(invest.created_at).toLocaleString()}
           </p>
           {invest.description && (
             <div className="mt-4 text-gray-300 leading-relaxed">
@@ -205,25 +207,25 @@ export default function InvestDetailPage() {
           )}
         </div>
       </div>
-      {/* 投资统计 */}
+      {/* Investment Statistics */}
       <div className="bg-[#1f1f1f] rounded-xl p-6 mt-6 space-y-4 shadow">
-        <h2 className="text-xl text-white font-bold">📊 投资数据总览</h2>
+        <h2 className="text-xl text-white font-bold">📊 Investment Overview</h2>
         <div className="text-gray-300">
-          filmTokenAddress：
+          filmTokenAddress:
           <span className="text-[#8be9fd]">
             {invest.films?.contract_address}
           </span>
         </div>
         <div className="text-gray-300">
-          总投资金额（USDC）：
+          Total Investment (USDC):
           <span className="text-[#8be9fd]">{totalUSDC}</span>
         </div>
         <div className="text-gray-300">
-          剩余 FilmToken 数量：
+          Remaining FilmToken:
           <span className="text-[#8be9fd]">{totalToken}</span>
         </div>
         <div className="text-gray-300">
-          当前 FilmToken 估值（USDC）：
+          Current FilmToken Valuation (USDC):
           <span className="text-[#8be9fd]">
             {tokenInUsdc && formatUnits(tokenInUsdc, decimals || 18)}
           </span>
@@ -233,14 +235,14 @@ export default function InvestDetailPage() {
             onClick={updateTokenPrice}
             className="mt-4 bg-gradient-to-r from-[#4abba1] to-[#8be9fd] text-black font-bold rounded shadow"
           >
-            🔄 更新FilmToken
+            🔄 Update FilmToken Price
           </Button>
         </div>
         <div>
           <Input
             style={{ width: 350 }}
             allowClear
-            placeholder="Enter something"
+            placeholder="Enter initial FilmToken amount"
             value={initialAmount.toString()}
             onChange={(value) => setInitialAmount(Number(value))}
           />
@@ -249,11 +251,19 @@ export default function InvestDetailPage() {
             onClick={initializeTokens}
             className="mt-4 bg-gradient-to-r from-[#4abba1] to-[#8be9fd] text-black font-bold rounded shadow"
           >
-            🛠️ 铸造FilmToken
+            🛠️ Mint FilmToken
+          </Button>
+        </div>
+        <div>
+          <Button
+            onClick={distributeDividends}
+            className="bg-gradient-to-r from-[#fbbf24] to-[#34d399] text-black font-bold rounded shadow"
+          >
+            💸 Distribute Dividends
           </Button>
         </div>
       </div>
-      {/* 👇 toast 必须渲染在页面中 */}
+      {/* 👇 toast must be rendered in the page */}
       {toast.render()}
     </div>
   );

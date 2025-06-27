@@ -64,3 +64,12 @@ body {
   border-radius: 8px;
   font-weight: bold;
 }
+
+/* 自定义隐藏滚动条类 */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari */
+}

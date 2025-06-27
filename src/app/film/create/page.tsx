@@ -15,9 +15,9 @@ export default function PublishFilmPage() {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
       <Steps current={current} className="mb-6">
-        <Step title="填写电影信息" />
-        <Step title="创建电影Token" />
-        <Step title="部署分红合约" />
+        <Step title="Fill in Film Information" />
+        <Step title="Create Film Token" />
+        <Step title="Deploy Profit Contract" />
       </Steps>
 
       {current === 0 && (

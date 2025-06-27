@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Carousel } from "@arco-design/web-react";
+import Image from "next/image";
 import { useAccount } from "wagmi";
 import {
   useConnectModal,
@@ -23,30 +24,48 @@ export default function Home() {
   const roleList = [
     {
       title: "🎥 Fan",
-      description:
-        "Browse films, unlock exclusive content, and collect NFT moments.",
-      button: "Start Exploring",
+      shortDesc: "Explore and enjoy exclusive content.",
       url: "/video",
+      button: "Start Exploring",
       image:
         "https://mammoth-plum-sheep.myfilebase.com/ipfs/QmcYuvpcgEVLYCh2Wy2BbWwGAppUFogkSHt7Z8RrSDxFzt",
+      features: [
+        "Browse and watch premium films",
+        "Unlock VIP content with tokens",
+        "Collect limited edition NFT moments",
+        "Vote on story development",
+        "Join fan-only communities",
+      ],
     },
     {
       title: "🚀 Creator",
+      shortDesc: "Build, launch, and profit from your films.",
       url: "/film",
-      description:
-        "Launch projects, publish series, attract investments, and share profits.",
+      button: "Create Content",
       image:
         "https://mammoth-plum-sheep.myfilebase.com/ipfs/QmSqHJ1wCWVLUqWzFDcUpfUWj3ByREcN6gbsYJYB2u9JDJ",
-      button: "Create Content",
+      features: [
+        "Publish film projects and set funding goals",
+        "Issue FilmTokens to your investors",
+        "Share profits with token holders",
+        "Unlock content with NFT access control",
+        "Build direct fan communities",
+      ],
     },
     {
       title: "💰 Investor",
+      shortDesc: "Invest and earn from great stories.",
       url: "/film",
-      description:
-        "Invest in great films, earn FilmToken, and participate in Web3 dividends.",
+      button: "Invest Now",
       image:
         "https://mammoth-plum-sheep.myfilebase.com/ipfs/QmUHALvcQTqfy4goZjUP1M4MAJADfB2EG6KjZSamyJm5kK",
-      button: "Invest Now",
+      features: [
+        "Invest in film projects with USDC",
+        "Receive ERC1155 FilmTokens",
+        "Earn on-chain dividends and rewards",
+        "Trade or transfer tokens across chains",
+        "Track transparent earnings and history",
+      ],
     },
   ];
   const handleGo = (item: any) => {
@@ -62,17 +81,25 @@ export default function Home() {
     setCurrentIndex(e);
   };
   return (
-    <div className="min-h-screen text-white overflow-hidden">
+    <div className="text-white overflow-hidden">
       {/* Hero Section */}
       <AnimatePresence>
         {!started && (
           <motion.section
-            className="relative h-screen flex flex-col justify-center items-center text-center px-6"
+            className="relative  flex flex-col justify-center items-center text-center px-6"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, y: -50 }}
             transition={{ duration: 1 }}
           >
-            <div className="z-10 max-w-3xl">
+            <div className="z-10">
+              <div className="relative w-[1200px] h-[800px]">
+                <Image
+                  src="/film_web3.png"
+                  alt="logo"
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+              </div>
               <h1 className="text-5xl md:text-6xl font-extrabold text-[#4abba1] mb-6 drop-shadow-lg">
                 Film Stories · Collect Memories
               </h1>
@@ -109,14 +136,15 @@ export default function Home() {
                 experiences.
               </p>
             </div>
-            <div className="flex flex-col mt-20">
+            <div className="flex flex-col md:flex-row gap-10 mt-20 px-6 justify-center items-start">
+              {/* 左侧轮播 */}
               <Carousel
                 autoPlay
                 animation="card"
                 onChange={handleChange}
                 showArrow="never"
                 indicatorPosition="outer"
-                style={{ width: "100%", height: 540 }}
+                style={{ width: 800, height: 540 }}
               >
                 {roleList.map((role, index) => (
                   <div
@@ -132,16 +160,22 @@ export default function Home() {
                   ></div>
                 ))}
               </Carousel>
-              <div className="text-center mt-10">
+              {/* 右侧玩法卡片 */}
+              <div className="max-w-lg bg-[#1f1f1f] p-8 rounded-2xl border border-[#333] shadow-xl text-white">
                 <h3 className="text-3xl font-semibold text-[#a0933d] mb-4">
                   {roleList[currentIndex].title}
                 </h3>
-                <p className="text-2xl text-gray-400 mb-6 text-center">
-                  {roleList[currentIndex].description}
+                <p className="text-xl text-gray-400 mb-6">
+                  {roleList[currentIndex].shortDesc}
                 </p>
+                <ul className="list-disc list-inside space-y-2 text-gray-300 mb-6">
+                  {roleList[currentIndex].features.map((f, i) => (
+                    <li key={i}>✅ {f}</li>
+                  ))}
+                </ul>
                 <button
                   onClick={() => handleGo(roleList[currentIndex])}
-                  className="text-xl bg-[#4abba1] text-black font-semibold py-4 px-8 rounded-xl hover:bg-[#00e0ad] transition"
+                  className="text-lg bg-[#4abba1] text-black font-semibold py-3 px-6 rounded-xl hover:bg-[#00e0ad] transition"
                 >
                   {roleList[currentIndex].button}
                 </button>

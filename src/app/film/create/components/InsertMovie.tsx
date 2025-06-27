@@ -5,6 +5,7 @@ import { supabase } from "@/supabase";
 import { Button } from "@arco-design/web-react";
 import lighthouse from "@lighthouse-web3/sdk";
 import Image from "next/image";
+import { useChainId } from "wagmi";
 
 interface Props {
   onSuccess: (filmId: number) => void;
@@ -28,6 +29,7 @@ export default function InsertMovie({ onSuccess }: Props) {
   });
 
   const [loading, setLoading] = useState(false);
+  const chainId = useChainId();
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -64,6 +66,7 @@ export default function InsertMovie({ onSuccess }: Props) {
             language: form.language,
             country: form.country,
             stars: form.stars,
+            chainId,
           },
         ])
         .select();
@@ -82,18 +85,24 @@ export default function InsertMovie({ onSuccess }: Props) {
 
   return (
     <div className="bg-[#181a20] p-6 rounded-xl shadow space-y-4">
-      <h2 className="text-xl text-[#8be9fd] font-bold">Step 1: 上传电影信息</h2>
+      <h2 className="text-xl text-[#8be9fd] font-bold">
+        Step 1: Upload Film Information
+      </h2>
 
       {[
-        { label: "电影名称", name: "title" },
-        { label: "导演", name: "director" },
-        { label: "时长 (分钟)", name: "runtime", type: "number" },
-        { label: "投资成本 ($)", name: "investmentCost", type: "number" },
-        { label: "简介", name: "plotSummary" },
-        { label: "类型", name: "genre" },
-        { label: "语言", name: "language" },
-        { label: "国家", name: "country" },
-        { label: "演员 (用英文逗号分隔)", name: "stars" },
+        { label: "Film Title", name: "title" },
+        { label: "Director", name: "director" },
+        { label: "Runtime (minutes)", name: "runtime", type: "number" },
+        {
+          label: "Investment Cost ($)",
+          name: "investmentCost",
+          type: "number",
+        },
+        { label: "Plot Summary", name: "plotSummary" },
+        { label: "Genre", name: "genre" },
+        { label: "Language", name: "language" },
+        { label: "Country", name: "country" },
+        { label: "Stars (comma separated)", name: "stars" },
       ].map(({ label, name, type }, i) => (
         <div key={i}>
           <label className="text-[#8be9fd] mb-1 block">{label}</label>
@@ -108,7 +117,7 @@ export default function InsertMovie({ onSuccess }: Props) {
       ))}
 
       <div>
-        <label className="text-[#8be9fd] mb-1 block">上传海报</label>
+        <label className="text-[#8be9fd] mb-1 block">Upload Poster</label>
         <input
           type="file"
           accept="image/*"
@@ -118,6 +127,8 @@ export default function InsertMovie({ onSuccess }: Props) {
         {form.posterUrl && (
           <Image
             src={form.posterUrl}
+            width={300}
+            height={450}
             alt="Poster Preview"
             className="mt-2 w-32 h-auto rounded shadow border border-gray-600"
           />
@@ -125,7 +136,7 @@ export default function InsertMovie({ onSuccess }: Props) {
       </div>
 
       <Button type="primary" loading={loading} onClick={handleSubmit}>
-        保存并继续
+        Save and Continue
       </Button>
     </div>
   );

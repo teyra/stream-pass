@@ -1,26 +1,24 @@
 "use client";
-import {
-  getFilmRecordAbi,
-  getFilmTokenBalanceAbi,
-  getFilmUSDCAbi,
-  getValuationInUsdcAbi,
-  investAbi,
-} from "@/abi/invest";
+import { investAbi } from "@/abi/invest";
 import { supabase } from "@/supabase";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import {
   useAccount,
+  useChainId,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
 import Image from "next/image";
 import dayjs from "dayjs";
+import { useToast } from "@/hooks/useToast";
+import { getChainConfig } from "@/config/chainConfig";
 
 export default function FilmInvestDetailPage() {
   const { id } = useParams();
+  const toast = useToast();
   interface Film {
     id: string | number;
     films: {
@@ -71,7 +69,7 @@ export default function FilmInvestDetailPage() {
   });
 
   const [loading, setLoading] = useState(true);
-
+  const chainId = useChainId();
   useEffect(() => {
     const fetchFilm = async () => {
       setLoading(true);
@@ -84,6 +82,7 @@ export default function FilmInvestDetailPage() {
       `
         )
         .eq("id", id)
+        .eq("chainId", chainId)
         .single();
       setFilm(data);
       setLoading(false);
@@ -98,8 +97,8 @@ export default function FilmInvestDetailPage() {
   const [amount, setAmount] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
   const [price, setPrice] = useState(0);
-
-  const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS;
+  const { usdcToken } = getChainConfig(chainId);
+  const USDC_ADDRESS = usdcToken;
   const investAddress = film.contractAddress;
 
   const [isApproving, setIsApproving] = useState(false);
@@ -134,14 +133,14 @@ export default function FilmInvestDetailPage() {
     data: any;
     refetch: () => void;
   } = useReadContract({
-    abi: getFilmUSDCAbi,
+    abi: investAbi,
     address: investAddress,
     functionName: "getFilmUSDC",
   });
 
   const { data: filmTokenBalance, refetch: filmTokenBalanceRefetch } =
     useReadContract({
-      abi: getFilmTokenBalanceAbi,
+      abi: investAbi,
       address: investAddress,
       functionName: "getFilmTokenBalance",
       args: [film.tokenId],
@@ -154,13 +153,13 @@ export default function FilmInvestDetailPage() {
     data: any;
     refetch: () => void;
   } = useReadContract({
-    abi: getFilmRecordAbi,
+    abi: investAbi,
     address: investAddress,
     functionName: "getAllInvestRecords",
     args: [film.tokenId],
   });
   const { data: currentPrice = "0" }: { data: any } = useReadContract({
-    abi: getValuationInUsdcAbi,
+    abi: investAbi,
     address: investAddress,
     functionName: "getValuationInUsdc",
     args: [film.tokenId],
@@ -177,6 +176,20 @@ export default function FilmInvestDetailPage() {
         investor: address,
         amount: amount,
         total_price: totalPrice,
+        chainId,
+      },
+    ]);
+  };
+
+  const handleInsertAsset = async () => {
+    await supabase.from("assets").insert([
+      {
+        film: film.films.id,
+        amount: amount,
+        type: 1,
+        chainId,
+        owner: address,
+        tokenId: film?.tokenId,
       },
     ]);
   };
@@ -242,6 +255,8 @@ export default function FilmInvestDetailPage() {
     filmRecordsRefetch();
     setInvesting(false);
     handleInsertRecord();
+    handleInsertAsset();
+    toast.success("Invest successfully");
     setHash("0x");
   }
   if (isAllowSuccess) {
@@ -249,6 +264,7 @@ export default function FilmInvestDetailPage() {
     setIsApproving(false);
     setHasApproved(true);
     allowBlanceRefetch();
+    toast.success("approve successfully");
   }
   if (loading) {
     return (
@@ -294,35 +310,38 @@ export default function FilmInvestDetailPage() {
               </span>
             </div>
 
-            {/* 电影标题 */}
+            {/* Movie Title */}
             <h1 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
               {film.films.title}
             </h1>
             <div className="text-teal-300 font-medium my-4">
-              SPT：{film.films.contract_address}
+              FMT: {film.films.contract_address}
             </div>
 
-            {/* 投资概述 */}
+            {/* Investment Overview */}
             <div className="mb-6 text-lg font-medium text-gray-300">
-              <span className="text-teal-400 font-semibold">制作预算：</span>{" "}
-              <span className="text-2xl font-bold text-emerald-400">
-                10亿美元
+              <span className="text-teal-400 font-semibold">
+                Production Budget:
               </span>{" "}
-              - 打造一部具有划时代意义的电影巨制
+              <span className="text-2xl font-bold text-emerald-400">
+                $1 Billion
+              </span>{" "}
+              - Creating an epoch-making blockbuster
             </div>
 
-            {/* 电影描述 */}
+            {/* Movie Description */}
             <div className="prose prose-invert max-w-none mb-8">
               <p className="text-gray-300 leading-relaxed">
                 {film.films.description}
               </p>
               <p className="text-teal-300 font-medium mt-4">
-                作为早期投资者加入我们，成为好莱坞历史的一部分。
-                这不仅仅是观看一部电影 - 而是拥有它的一部分。
+                Join us as an early investor and become part of Hollywood
+                history. This is not just watching a movie - it's owning a part
+                of it.
               </p>
             </div>
 
-            {/* 投资亮点 */}
+            {/* Investment Highlights */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 mb-8 border border-gray-700 shadow-lg">
               <h3 className="text-xl font-bold mb-4 text-teal-400 flex items-center">
                 <svg
@@ -336,7 +355,7 @@ export default function FilmInvestDetailPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                投资亮点
+                Investment Highlights
               </h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
@@ -351,23 +370,9 @@ export default function FilmInvestDetailPage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>来自票房、流媒体版权和周边商品的收入分成</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="w-5 h-5 text-emerald-400 mt-0.5 mr-2 flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
                   <span>
-                    由<span className="font-medium">{film.films.director}</span>
-                    执导，主演包括{film.films.stars?.join("、")}
+                    Revenue sharing from box office, streaming rights, and
+                    merchandise
                   </span>
                 </li>
                 <li className="flex items-start">
@@ -382,7 +387,11 @@ export default function FilmInvestDetailPage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>智能合约确保透明和自动的利润分配</span>
+                  <span>
+                    Directed by{" "}
+                    <span className="font-medium">{film.films.director}</span>,
+                    starring {film.films.stars?.join(", ")}
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <svg
@@ -396,31 +405,50 @@ export default function FilmInvestDetailPage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>SPT可在二级市场交易，流动性强</span>
+                  <span>
+                    Smart contracts ensure transparent and automatic profit
+                    distribution
+                  </span>
+                </li>
+                <li className="flex items-start">
+                  <svg
+                    className="w-5 h-5 text-emerald-400 mt-0.5 mr-2 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>
+                    FMT can be traded on the secondary market, high liquidity
+                  </span>
                 </li>
               </ul>
             </div>
 
-            {/* 投资数据统计 */}
+            {/* Investment Data Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <div className="text-sm text-gray-400">已筹集</div>
+                <div className="text-sm text-gray-400">Raised</div>
                 <div className="text-xl font-bold text-teal-400">
                   {Number(formatUnits(collectBalance || 0, 6)).toFixed(2)} USDC
                 </div>
               </div>
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <div className="text-sm text-gray-400">投资人</div>
+                <div className="text-sm text-gray-400">Investors</div>
                 <div className="text-xl font-bold text-emerald-400">
                   {filmRecords.length || 0}
                 </div>
               </div>
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <div className="text-sm text-gray-400">目标金额</div>
-                <div className="text-xl font-bold text-white">5亿美元</div>
+                <div className="text-sm text-gray-400">Target Amount</div>
+                <div className="text-xl font-bold text-white">$500 Million</div>
               </div>
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <div className="text-sm text-gray-400">剩余天数</div>
+                <div className="text-sm text-gray-400">Days Left</div>
                 <div className="text-xl font-bold text-amber-400">
                   {film.films.leftDays || 100}
                 </div>
@@ -428,7 +456,7 @@ export default function FilmInvestDetailPage() {
             </div>
             <div className="flex flex-col gap-2 mb-4">
               <label className="mb-1 text-sm text-gray-300 font-medium">
-                请选择想获得的 SPT 数量
+                Select the amount of FMT you want to receive
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {[1, 5, 10, 15, 20, 25, 30].map((val) => (
@@ -448,7 +476,7 @@ export default function FilmInvestDetailPage() {
                 ))}
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                预计需要支付
+                Estimated payment
                 <span className="text-[#8be9fd] font-bold mx-1">
                   {totalPrice.toFixed(2)}
                 </span>
@@ -463,10 +491,10 @@ export default function FilmInvestDetailPage() {
                   className="bg-[#3aefc1] text-black font-semibold px-6 py-3 rounded-full shadow hover:scale-105 transition disabled:opacity-50 w-full"
                 >
                   {isApproving
-                    ? "授权中..."
+                    ? "Authorizing..."
                     : hasApproved
-                    ? "已授权 ✅"
-                    : "① 授权通证额度"}
+                    ? "Authorized ✅"
+                    : "① Approve USDC"}
                 </button>
               )}
               {hasApproved && (
@@ -475,15 +503,15 @@ export default function FilmInvestDetailPage() {
                   onClick={handleInvest}
                   className="bg-gradient-to-r from-[#58e1c1] to-[#58d68d] text-black font-bold px-6 py-3 rounded-full shadow-xl hover:scale-105 transition w-full disabled:opacity-50 mt-4"
                 >
-                  {investing ? "加载中..." : "② 立即投资"}
+                  {investing ? "Processing..." : "② Invest Now"}
                 </button>
               )}
             </div>
           </div>
 
-          {/* 右侧 - 投资详情 */}
+          {/* Right Side - Investment Details */}
           <div className="w-full lg:w-96 space-y-8">
-            {/* 投资条款 */}
+            {/* Investment Terms */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 shadow-lg">
               <h3 className="text-xl font-bold mb-4 text-teal-400 flex items-center">
                 <svg
@@ -498,35 +526,37 @@ export default function FilmInvestDetailPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                投资条款
+                Investment Terms
               </h3>
               <div className="space-y-4">
                 <div>
-                  <div className="text-sm text-gray-400">最低投资额</div>
+                  <div className="text-sm text-gray-400">
+                    Minimum Investment
+                  </div>
                   <div className="text-lg font-medium">
                     {price.toFixed(2)} USDC
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400">代币价格</div>
+                  <div className="text-sm text-gray-400">Token Price</div>
                   <div className="text-lg font-medium">
-                    {price.toFixed(2)} USDC = 1 SPT
+                    {price.toFixed(2)} USDC = 1 FMT
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400">预期回报率</div>
+                  <div className="text-sm text-gray-400">Expected Return</div>
                   <div className="text-lg font-medium text-emerald-400">
-                    3-5倍
+                    3-5x
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400">锁定期</div>
-                  <div className="text-lg font-medium">6个月</div>
+                  <div className="text-sm text-gray-400">Lock-up Period</div>
+                  <div className="text-lg font-medium">6 months</div>
                 </div>
               </div>
             </div>
 
-            {/* 近期投资记录 */}
+            {/* Recent Investment Records */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 shadow-lg">
               <h3 className="text-xl font-bold mb-4 text-teal-400 flex items-center">
                 <svg
@@ -540,7 +570,7 @@ export default function FilmInvestDetailPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                近期投资
+                Recent Investments
               </h3>
               <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 {filmRecords?.length > 0 ? (
@@ -582,20 +612,20 @@ export default function FilmInvestDetailPage() {
                           USDC
                         </div>
                         <div className="text-xs text-gray-400">
-                          {item.filmTokenAmount} SPT
+                          {item.filmTokenAmount} FMT
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    暂无投资记录，成为第一个投资者！
+                    No investment records yet, be the first investor!
                   </div>
                 )}
               </div>
             </div>
 
-            {/* 投资流程 */}
+            {/* Investment Process */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 shadow-lg">
               <h3 className="text-xl font-bold mb-4 text-teal-400 flex items-center">
                 <svg
@@ -609,7 +639,7 @@ export default function FilmInvestDetailPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                投资流程
+                Investment Process
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start">
@@ -619,9 +649,9 @@ export default function FilmInvestDetailPage() {
                     </div>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium">连接您的钱包</p>
+                    <p className="text-sm font-medium">Connect your wallet</p>
                     <p className="text-xs text-gray-400">
-                      支持：MetaMask、WalletConnect
+                      Supported: MetaMask, WalletConnect
                     </p>
                   </div>
                 </div>
@@ -632,9 +662,9 @@ export default function FilmInvestDetailPage() {
                     </div>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium">授权USDC支出</p>
+                    <p className="text-sm font-medium">Approve USDC spending</p>
                     <p className="text-xs text-gray-400">
-                      对我们的智能合约进行一次授权
+                      Approve our smart contract once
                     </p>
                   </div>
                 </div>
@@ -645,8 +675,8 @@ export default function FilmInvestDetailPage() {
                     </div>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium">投资任意金额</p>
-                    <p className="text-xs text-gray-400">最低10 USDC</p>
+                    <p className="text-sm font-medium">Invest any amount</p>
+                    <p className="text-xs text-gray-400">Minimum 10 USDC</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -656,8 +686,10 @@ export default function FilmInvestDetailPage() {
                     </div>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium">获得SPT</p>
-                    <p className="text-xs text-gray-400">立即铸造到您的钱包</p>
+                    <p className="text-sm font-medium">Receive FMT</p>
+                    <p className="text-xs text-gray-400">
+                      Minted instantly to your wallet
+                    </p>
                   </div>
                 </div>
               </div>
@@ -665,6 +697,8 @@ export default function FilmInvestDetailPage() {
           </div>
         </div>
       </div>
+      {/* 👇 toast must be rendered in the page */}
+      {toast.render()}
     </div>
   );
 }
