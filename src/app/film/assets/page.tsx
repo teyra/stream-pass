@@ -97,7 +97,7 @@ export default function AssetCrossChainPage() {
                 </span>
               </div>
               <div className="text-xm font-bold text-[#56595a] m-2">
-                Token ID: {asset.invest?.tokenId}
+                Token ID: {asset?.tokenId}
               </div>
               <div className="text-xl font-bold text-[#a6afb1] ml-2 mb-5">
                 {asset.film?.title}
