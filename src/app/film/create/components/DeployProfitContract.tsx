@@ -49,7 +49,7 @@ export default function DeployInvestmentContract({
       ]);
       onDeployed(contractAddress);
     },
-    [film.id, address, onDeployed]
+    [film.id, address, chainId, onDeployed]
   );
   useEffect(() => {
     if (isSuccess) {

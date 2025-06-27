@@ -52,7 +52,7 @@ export default function MyCreatedInvestments() {
       setLoading(false);
     };
     if (address) fetchRecords();
-  }, [address]);
+  }, [address, chainId]);
 
   const shortAddress = (addr: string) =>
     addr.slice(0, 6) + "..." + addr.slice(-4);

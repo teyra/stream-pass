@@ -19,6 +19,10 @@ import { getChainConfig } from "@/config/chainConfig";
 export default function FilmInvestDetailPage() {
   const { id } = useParams();
   const toast = useToast();
+
+  const title =
+    "Join us as an early investor and become part of Hollywoodhistory. This is not just watching a movie - it's owning a partof it.";
+
   interface Film {
     id: string | number;
     films: {
@@ -88,7 +92,7 @@ export default function FilmInvestDetailPage() {
       setLoading(false);
     };
     fetchFilm();
-  }, [id]);
+  }, [id, chainId]);
 
   const { writeContractAsync, error } = useWriteContract();
   const { address } = useAccount();
@@ -334,11 +338,7 @@ export default function FilmInvestDetailPage() {
               <p className="text-gray-300 leading-relaxed">
                 {film.films.description}
               </p>
-              <p className="text-teal-300 font-medium mt-4">
-                Join us as an early investor and become part of Hollywood
-                history. This is not just watching a movie - it's owning a part
-                of it.
-              </p>
+              <p className="text-teal-300 font-medium mt-4">{title}</p>
             </div>
 
             {/* Investment Highlights */}

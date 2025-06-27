@@ -62,7 +62,7 @@ export default function AssetCrossChainPage() {
       setList(processedData || []);
     };
     fetchAssets();
-  }, [address]);
+  }, [address, chainId]);
 
   return (
     <div className="max-w-2xl  py-10 px-4">

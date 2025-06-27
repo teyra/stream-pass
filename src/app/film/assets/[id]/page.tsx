@@ -72,15 +72,6 @@ export default function FilmInvestDetailPage() {
   const { isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
-  useEffect(() => {
-    if (isSuccess) {
-      setHash("0x");
-      setTxLoading(false);
-      setModalVisible(false);
-      handleBurnAsset();
-      toast.success("Cross-chain transfer submitted!");
-    }
-  }, [isSuccess, toast]);
   const handleBurnAsset = async () => {
     await supabase.from("assets").insert([
       {
@@ -93,6 +84,14 @@ export default function FilmInvestDetailPage() {
       },
     ]);
   };
+  if (isSuccess) {
+    setHash("0x");
+    setTxLoading(false);
+    setModalVisible(false);
+    handleBurnAsset();
+    toast.success("Cross-chain transfer submitted!");
+  }
+
   const { isSuccess: isLotterySuccess } = useWaitForTransactionReceipt({
     hash: lotteryHash,
   });
